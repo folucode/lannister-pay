@@ -1,8 +1,8 @@
 const schema = {
-  'FEE-ID': (value) => value.startsWith('LNPY') && value.length == 8,
-  'FEE-CURRENCY': (value) => value == 'NGN',
-  'FEE-LOCALE': (value) => ['LOCL', 'INTL', '*'].includes(value),
-  'FEE-ENTITY': (value) =>
+  feeID: (value) => value.startsWith('LNPY') && value.length == 8,
+  feeCurrency: (value) => value == 'NGN',
+  feeLocale: (value) => ['LOCL', 'INTL', '*'].includes(value),
+  feeEntity: (value) =>
     [
       'CREDIT-CARD',
       'DEBIT-CARD',
@@ -11,13 +11,13 @@ const schema = {
       'WALLET-ID',
       '*',
     ].includes(value),
-  'FEE-PROPERTY': (value) => /^[A-Z*]+$/.test(value),
-  'FEE-TYPE': (value) => ['PERC', 'FLAT', 'FLAT_PERC'].includes(value),
-  'FEE-VALUE': (value) =>
+  feeProperty: (value) => /^[A-Z*]+$/.test(value),
+  feeType: (value) => ['PERC', 'FLAT', 'FLAT_PERC'].includes(value),
+  feeValue: (value) =>
     (Number.isInteger(value) && value >= 0) || typeof value === 'string',
 };
 
-module.exports.specParser = (req, res, next) => {
+const specParser = (req, res, next) => {
   try {
     const { FeeConfigurationSpec } = req.body;
 
@@ -31,20 +31,16 @@ module.exports.specParser = (req, res, next) => {
       const specConfig = spec.split(':')[0].trim().split(' ');
       const specApply = spec.split(':')[1].trim().split(' ');
 
-      specObject['FEE-ID'] = specConfig[0];
-      specObject['FEE-CURRENCY'] = specConfig[1];
-      specObject['FEE-LOCALE'] = specConfig[2];
-      let specEntityValue = specConfig[3];
+      [specObject.feeID, specObject.feeCurrency, specObject.feeLocale] =
+        specConfig;
 
-      specEntityValue = specEntityValue.replace('(', ' ');
-      specEntityValue = specEntityValue.replace(')', '');
+      let specEntityValueArray = specConfig[3]
+        .replace('(', ' ')
+        .replace(')', '')
+        .split(' ');
 
-      let specEntityValueArray = specEntityValue.split(' ');
-
-      specObject['FEE-ENTITY'] = specEntityValueArray[0];
-      specObject['FEE-PROPERTY'] = specEntityValueArray[1];
-      specObject['FEE-TYPE'] = specApply[1];
-      specObject['FEE-VALUE'] = specApply[2];
+      [specObject.feeEntity, specObject.feeProperty] = specEntityValueArray;
+      [, specObject.feeType, specObject.feeValue] = specApply;
 
       const errors = validate(specObject, schema);
 
@@ -60,7 +56,7 @@ module.exports.specParser = (req, res, next) => {
       finalFeeConfigurationSpec.push(specObject);
     });
 
-    res.locals.finalFeeConfigurationSpec = finalFeeConfigurationSpec;
+    req.finalFeeConfigurationSpec = finalFeeConfigurationSpec;
     return next();
   } catch (error) {
     res.status(500).send('Something went wrong' + error.message);
@@ -74,3 +70,5 @@ const validate = (object, schema) => {
 
   return err;
 };
+
+module.exports = specParser;

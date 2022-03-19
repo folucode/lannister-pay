@@ -1,6 +1,6 @@
 const express = require('express');
 const feeController = require('../src/controllers/feeController');
-const { specParser } = require('../src/middlewares/specParser');
+const specParser = require('../src/middlewares/specParser');
 
 const router = express.Router();
 

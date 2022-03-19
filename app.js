@@ -1,7 +1,10 @@
 const express = require('express');
 const routes = require('./config/routes');
+const db = require('./config/db');
 
 const app = express();
+
+db();
 
 app.use(
   express.urlencoded({
