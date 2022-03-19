@@ -1,11 +1,113 @@
-const FeeConfigurationSpec = require('../models/FeeConfigurationSpec');
+const redis = require('redis');
+const client = redis.createClient({ socket: { port: 6379 } });
+
+client.connect();
+
+client.on('connect', () => {
+  console.log('redis connected');
+});
 
 module.exports = {
   setupFeeSpec: async (feeSpecs) => {
-    await FeeConfigurationSpec.insertMany(feeSpecs);
+    client.set('FeeConfigurationSpec', JSON.stringify(feeSpecs));
 
     return {
       status: 'ok',
     };
   },
+
+  computeTransactionFee: async (details) => {
+    const FeeConfigurationData = await client.get('FeeConfigurationSpec');
+    const parsedData = JSON.parse(FeeConfigurationData);
+
+    const {
+      Amount,
+      Customer: { BearsFee },
+      CurrencyCountry,
+      PaymentEntity: { ID, Number, SixID, Country, Type, Issuer, Brand },
+      Currency,
+    } = details;
+
+    if (CurrencyCountry === Country) {
+      Locale = 'LOCL';
+    } else {
+      Locale = 'INTL';
+    }
+
+    const feeConfigs = parsedData.filter(
+      ({ feeCurrency, feeLocale, feeEntity, feeProperty }) =>
+        feeCurrency == Currency &&
+        [Locale, '*'].includes(feeLocale) &&
+        [Type, '*'].includes(feeEntity) &&
+        [Issuer, Brand, Number, ID, SixID, '*'].includes(feeProperty)
+    );
+
+    if (feeConfigs.length < 1) {
+      return {
+        status: 'failed',
+        error: `No fee configuration for ${Currency} transactions.`,
+      };
+    }
+
+    if (feeConfigs.length > 1) {
+      let specificityData = feeConfigs.filter(
+        ({ feeProperty, feeEntity }) => feeProperty != '*' || feeEntity != '*'
+      );
+
+      let data = calculateFee(specificityData, Amount, BearsFee);
+
+      return {
+        data,
+      };
+    }
+
+    data = calculateFee(feeConfigs, Amount, BearsFee);
+
+    return {
+      data,
+    };
+  },
+};
+
+const calculateFee = (spec, amount, bearsFee) => {
+  const feeType = spec[0].feeType;
+  const feeValue = spec[0].feeValue;
+  const AppliedFeeID = spec[0].feeID;
+
+  if (feeType == 'FLAT_PERC') {
+    const [flat, perc] = feeValue.split(':');
+    const percentValue = Math.round((parseFloat(perc) / 100) * amount);
+    const AppliedFeeValue = parseInt(flat) + percentValue;
+    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const SettlementAmount = ChargeAmount - AppliedFeeValue;
+
+    return {
+      AppliedFeeID,
+      AppliedFeeValue,
+      ChargeAmount,
+      SettlementAmount,
+    };
+  } else if (feeType == 'PERC') {
+    const AppliedFeeValue = Math.round((parseFloat(feeValue) / 100) * amount);
+    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const SettlementAmount = ChargeAmount - AppliedFeeValue;
+
+    return {
+      AppliedFeeID,
+      AppliedFeeValue,
+      ChargeAmount,
+      SettlementAmount,
+    };
+  } else if (feeType == 'FLAT') {
+    const AppliedFeeValue = parseInt(feeValue);
+    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const SettlementAmount = ChargeAmount - AppliedFeeValue;
+
+    return {
+      AppliedFeeID,
+      AppliedFeeValue,
+      ChargeAmount,
+      SettlementAmount,
+    };
+  }
 };

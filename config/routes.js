@@ -12,5 +12,6 @@ router.get('/', (req, res) => {
 });
 
 router.post('/fees', specParser, feeController.setupFee);
+router.post('/compute-transaction-fee', feeController.computeTransactionFee);
 
 module.exports = router;

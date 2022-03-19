@@ -28,19 +28,22 @@ const specParser = (req, res, next) => {
     fees.forEach((spec) => {
       let specObject = {};
 
-      const specConfig = spec.split(':')[0].trim().split(' ');
-      const specApply = spec.split(':')[1].trim().split(' ');
+      const [specConfig, specApply, flat_perc_val] = spec.split(':');
 
-      [specObject.feeID, specObject.feeCurrency, specObject.feeLocale] =
-        specConfig;
+      [
+        specObject.feeID,
+        specObject.feeCurrency,
+        specObject.feeLocale,
+        feeProperty,
+      ] = specConfig.trim().split(' ');
 
-      let specEntityValueArray = specConfig[3]
+      let specEntityValueArray = feeProperty
         .replace('(', ' ')
         .replace(')', '')
         .split(' ');
 
       [specObject.feeEntity, specObject.feeProperty] = specEntityValueArray;
-      [, specObject.feeType, specObject.feeValue] = specApply;
+      [, specObject.feeType, specObject.feeValue] = specApply.trim().split(' ');
 
       const errors = validate(specObject, schema);
 
@@ -51,6 +54,10 @@ const specParser = (req, res, next) => {
             message,
           });
         }
+      }
+
+      if (flat_perc_val != undefined) {
+        specObject.feeValue += `:${flat_perc_val}`;
       }
 
       finalFeeConfigurationSpec.push(specObject);
