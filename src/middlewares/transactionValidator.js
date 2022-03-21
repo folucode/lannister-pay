@@ -65,7 +65,7 @@ const transactionValidator = {
       .trim()
       .isIn(['CREDIT-CARD', 'DEBIT-CARD', 'BANK-ACCOUNT', 'USSD', 'WALLET-ID'])
       .withMessage(
-        'Type CREDIT-CARD, DEBIT-CARD, BANK-ACCOUNT, USSD, WALLET-ID'
+        'Type has to be CREDIT-CARD, DEBIT-CARD, BANK-ACCOUNT, USSD, or WALLET-ID'
       ),
     check('PaymentEntity.Country')
       .not()
