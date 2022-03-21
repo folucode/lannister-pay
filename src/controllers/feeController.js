@@ -1,14 +1,17 @@
-const { setupFeeSpec, computeTransactionFee } = require('../services/feeService');
+const {
+  setupFeeSpec,
+  computeTransactionFee,
+} = require('../services/feeService');
 
 module.exports = {
   setupFee: async (req, res) => {
     try {
       const FeeConfigurationSpec = req.finalFeeConfigurationSpec;
 
-      const result = await setupFeeSpec(FeeConfigurationSpec);
-      return res.status(201).send(result);
+      const { status, message } = await setupFeeSpec(FeeConfigurationSpec);
+      return res.status(201).send({ status, message });
     } catch (error) {
-      res.status(500).send('Something went wrong' + error.message);
+      res.status(500).send('Something went wrong');
     }
   },
 
@@ -16,12 +19,14 @@ module.exports = {
     try {
       const paymentDetails = req.body;
 
-      const { status, error, data } = await computeTransactionFee(paymentDetails);
-      if (status == 'failed') return res.status(400).send({error});
+      const { status, message, data } = await computeTransactionFee(
+        paymentDetails
+      );
+      if (status == 'failed') return res.status(400).send({ status, message });
 
-      return res.send(data);
+      return res.send({ status, message, data });
     } catch (error) {
-      res.status(500).send('Something went wrong' + error.message);
+      res.status(500).send('Something went wrong');
     }
   },
 };

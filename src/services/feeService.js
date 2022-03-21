@@ -14,6 +14,7 @@ module.exports = {
 
     return {
       status: 'ok',
+      message: 'fee configuration spec created successfully',
     };
   },
 
@@ -46,7 +47,7 @@ module.exports = {
     if (feeConfigs.length < 1) {
       return {
         status: 'failed',
-        error: `No fee configuration for ${Currency} transactions.`,
+        message: `No fee configuration for ${Currency} transactions.`,
       };
     }
 
@@ -58,6 +59,8 @@ module.exports = {
       let data = calculateFee(specificityData, Amount, BearsFee);
 
       return {
+        status: 'success',
+        message: 'fee computed successfully',
         data,
       };
     }
@@ -65,6 +68,8 @@ module.exports = {
     data = calculateFee(feeConfigs, Amount, BearsFee);
 
     return {
+      status: 'success',
+      message: 'fee computed successfully',
       data,
     };
   },
