@@ -25,6 +25,8 @@ const specParser = (req, res, next) => {
 
     let finalFeeConfigurationSpec = [];
 
+    let errorObject = [];
+
     fees.forEach((spec) => {
       let specObject = {};
 
@@ -48,11 +50,8 @@ const specParser = (req, res, next) => {
       const errors = validate(specObject, schema);
 
       if (errors.length > 0) {
-        for (const { message } of errors) {
-          res.status(400).send({
-            status: 'failed',
-            message,
-          });
+        for (const error of errors) {
+          errorObject.push(error);
         }
       }
 
@@ -64,7 +63,14 @@ const specParser = (req, res, next) => {
     });
 
     req.finalFeeConfigurationSpec = finalFeeConfigurationSpec;
-    return next();
+    if (errorObject.length > 0) {
+      res.status(400).send({
+        status: 'failed',
+        errors: errorObject,
+      });
+    } else {
+      return next();
+    }
   } catch (error) {
     res.status(500).send('Something went wrong' + error.message);
   }
