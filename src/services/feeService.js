@@ -82,9 +82,9 @@ const calculateFee = (spec, amount, bearsFee) => {
 
   if (feeType == 'FLAT_PERC') {
     const [flat, perc] = feeValue.split(':');
-    const percentValue = Math.round((parseFloat(perc) / 100) * amount);
+    const percentValue = Math.round((parseFloat(perc) / 100) * parseInt(amount));
     const AppliedFeeValue = parseInt(flat) + percentValue;
-    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const ChargeAmount = bearsFee ? AppliedFeeValue + parseInt(amount) : amount;
     const SettlementAmount = ChargeAmount - AppliedFeeValue;
 
     return {
@@ -94,8 +94,8 @@ const calculateFee = (spec, amount, bearsFee) => {
       SettlementAmount,
     };
   } else if (feeType == 'PERC') {
-    const AppliedFeeValue = Math.round((parseFloat(feeValue) / 100) * amount);
-    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const AppliedFeeValue = Math.round((parseFloat(feeValue) / 100) * parseInt(amount));
+    const ChargeAmount = bearsFee == true ? AppliedFeeValue + parseInt(amount) : amount;
     const SettlementAmount = ChargeAmount - AppliedFeeValue;
 
     return {
@@ -106,7 +106,7 @@ const calculateFee = (spec, amount, bearsFee) => {
     };
   } else if (feeType == 'FLAT') {
     const AppliedFeeValue = parseInt(feeValue);
-    const ChargeAmount = bearsFee == true ? AppliedFeeValue + amount : amount;
+    const ChargeAmount = bearsFee == true ? AppliedFeeValue + parseInt(amount) : amount;
     const SettlementAmount = ChargeAmount - AppliedFeeValue;
 
     return {

@@ -41,11 +41,6 @@ const transactionValidator = {
       .isEmpty({ ignore_whitespace: true })
       .withMessage('Issuer is required')
       .trim(),
-    check('PaymentEntity.Brand')
-      .not()
-      .isEmpty({ ignore_whitespace: true })
-      .withMessage('Brand is required')
-      .trim(),
     check('PaymentEntity.Number')
       .not()
       .isEmpty({ ignore_whitespace: true })
